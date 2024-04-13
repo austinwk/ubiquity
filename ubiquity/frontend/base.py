@@ -95,7 +95,7 @@ class BaseFrontend:
 
     def __init__(self, distro):
         """Frontend initialisation."""
-        self.distro = distro
+        self.distro = distro #A: "linuxmint"
         self.db = None
         self.dbfilter = None
         self.dbfilter_status = None
@@ -112,7 +112,7 @@ class BaseFrontend:
         self.start_debconf()
 
         self.oem_user_config = False
-        if 'UBIQUITY_OEM_USER_CONFIG' in os.environ:
+        if 'UBIQUITY_OEM_USER_CONFIG' in os.environ: #A: False
             self.oem_user_config = True
 
         try:
@@ -121,14 +121,14 @@ class BaseFrontend:
             self.custom_title = False
 
         self.oem_config = False
-        if not self.oem_user_config:
+        if not self.oem_user_config: #A: True
             try:
-                if self.db.get('oem-config/enable') == 'true':
+                if self.db.get('oem-config/enable') == 'true': #A: False
                     self.oem_config = True
             except debconf.DebconfError:
                 pass
 
-            if self.oem_config:
+            if self.oem_config: #A: False
                 try:
                     self.db.set('passwd/auto-login', 'true')
                     self.db.set('passwd/auto-login-backup', 'oem')
@@ -142,29 +142,34 @@ class BaseFrontend:
         self.error_cmd = ''
         self.success_cmd = ''
         try:
+            #A: These seem to be added from debian/ubiquity.templates... when?.
             self.automation_error_cmd = self.db.get(
-                'ubiquity/automation_failure_command')
-            self.error_cmd = self.db.get('ubiquity/failure_command')
-            self.success_cmd = self.db.get('ubiquity/success_command')
+                'ubiquity/automation_failure_command')                 #A: ''
+            self.error_cmd = self.db.get('ubiquity/failure_command')   #A: ''
+            self.success_cmd = self.db.get('ubiquity/success_command') #A: ''
         except debconf.DebconfError:
             pass
 
         try:
             self.show_shutdown_button = \
-                self.db.get('ubiquity/show_shutdown_button') == 'true'
+                self.db.get('ubiquity/show_shutdown_button') == 'true' #A: False
         except debconf.DebconfError:
             self.show_shutdown_button = False
 
         self.hide_slideshow = False
         try:
-            if self.db.get('ubiquity/hide_slideshow') == 'true':
+            if self.db.get('ubiquity/hide_slideshow') == 'true': #A: False
                 self.hide_slideshow = True
         except debconf.DebconfError:
             pass
 
         # Load plugins
-        plugins = plugin_manager.load_plugins()
+        plugins = plugin_manager.load_plugins() #A: ubiquity/plugins
+
+        #A: Each plugin.py has a `WEIGHT` variable
+        #A: ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup, ubi-network
         modules = plugin_manager.order_plugins(plugins)
+
         self.modules = []
         for mod in modules:
             comp = Component()

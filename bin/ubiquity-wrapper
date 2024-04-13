@@ -18,7 +18,7 @@ def main():
 
     i = 1
     while i < len(sys.argv):
-        if not sys.argv[i].startswith('-'):
+        if not sys.argv[i].startswith('-'): #A: True
             frontend = sys.argv[i]
         elif sys.argv[i] == '--autopilot':
             try:
@@ -28,13 +28,13 @@ def main():
         newargv.append(sys.argv[i])
         i += 1
 
-    if os.getuid() == 0:
+    if os.getuid() == 0: #A: True
         # no privilege escalation required
-        inner = ['/usr/lib/ubiquity/bin/ubiquity'] + newargv
+        inner = ['/usr/lib/ubiquity/bin/ubiquity'] + newargv #A: newargv = ['gtk_ui']
 
         # Make sure ibus works
-        if (os.getenv("GTK_IM_MODULE") == "ibus" and
-                os.getenv("XDG_SESSION_COOKIE")):
+        if (os.getenv("GTK_IM_MODULE") == "ibus" and #A: False GTK_IM_MODULE is unset
+                os.getenv("XDG_SESSION_COOKIE")):    #A:       XDG_SESSION_COOKIE is unset
             ibus_path = os.path.expanduser("~/.config/ibus/bus")
             if os.path.exists(ibus_path):
                 # Guess the path to the ibus config file
@@ -49,13 +49,16 @@ def main():
                             os.environ[fields[0]] = fields[1]
 
         # Ensure the OOM killer doesn't nom on us.
+        #A: Out Of Memory Killer. Set the process score to the lowest (-1000) to make it immune to killing.
+        #A: https://www.baeldung.com/linux/memory-overcommitment-oom-killer#protecting-the-process-from-the-oom-killer
         with open('/proc/%d/oom_score_adj' % os.getpid(), 'w') as fp:
             fp.write('-1000')
 
         # Disable storage automounting
+        #A: udisks2-inhibit is a shell script. Per it's comments it purpose is to "Avoid udisks mounting while a program is running. This is mostly useful for installers."
         udisks2 = '/usr/lib/udisks2/udisks2-inhibit'
-        if os.path.isfile(udisks2) and os.access(udisks2, os.X_OK):
-            toexec += [udisks2] + inner
+        if os.path.isfile(udisks2) and os.access(udisks2, os.X_OK): #A: True
+            toexec += [udisks2] + inner #A: toexec = ['/usr/lib/udisks2/udisks2-inhibit', '/usr/lib/ubiquity/bin/ubiquity', 'gtk_ui']
         elif osextras.find_on_path('udisks'):
             toexec += ['udisks', '--inhibit', '--'] + inner
         elif (osextras.find_on_path('hal-lock') and
@@ -82,8 +85,12 @@ def main():
         toexec = ['pkexec', sys.argv[0]]
         toexec.extend(newargv)
 
-    if 'UBIQUITY_WRAPPER_DEBUG' in os.environ:
+    if 'UBIQUITY_WRAPPER_DEBUG' in os.environ: #A: False
         print(toexec, file=sys.stderr)
+
+    #A: Run `udisks2-inhibit ubiquity gtk_ui` (shortened)
+    #A: execvp executes a new program using the same process (the pid is the same) and preserves the environment.
+    #A: In this source code '/usr/lib/ubiquity/bin/ubiquity' is 'bin/ubiquity', so look there next.
     os.execvp(toexec[0], toexec)
     sys.exit(127)
 

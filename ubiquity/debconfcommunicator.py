@@ -35,7 +35,7 @@ class DebconfCommunicator(debconf.Debconf):
         debconf.Debconf.__init__(self, title=title,
                                  read=self.dccomm.stdout,
                                  write=self.dccomm.stdin)
-        if cloexec:
+        if cloexec: #A: True
             fcntl.fcntl(self.read.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
             fcntl.fcntl(self.write.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
 

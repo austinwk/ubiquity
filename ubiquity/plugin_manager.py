@@ -24,7 +24,7 @@ import os
 import sys
 
 
-PLUGIN_PATH = (os.environ.get('UBIQUITY_PLUGIN_PATH', False) or
+PLUGIN_PATH = (os.environ.get('UBIQUITY_PLUGIN_PATH', False) or #A: False
                '/usr/lib/ubiquity/plugins')
 
 
@@ -38,6 +38,7 @@ def load_plugin(modname):
 
 def load_plugins():
     modules = []
+    #A: ubi-console-setup.py, ubi-language.py, ubi-network.py, ubi-partman.py, ubi-prepare.py, ubi-timezone.py, ubi-usersetup.py, ubi-wireless.py
     modfiles = [x for x in os.listdir(PLUGIN_PATH)
                 if fnmatch.fnmatch(x, '*.py')]
     for modfile in modfiles:
@@ -147,8 +148,9 @@ def one_pass(mods, order, hidden_list):
     return False
 
 
+#A: Each plugin.py has a `WEIGHT` variable
 def order_plugins(mods, order=None):
-    if order is None:
+    if order is None: #A: True
         order = []
     hidden_list = []
     # First, sort mods by weight

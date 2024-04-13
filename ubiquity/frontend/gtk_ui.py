@@ -178,7 +178,7 @@ def on_screen_reader_enabled_changed(gsettings, key):
             del os.environ['UBIQUITY_A11Y_PROFILE']
 
 
-class Wizard(BaseFrontend):
+class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
     def __init__(self, distro):
         def add_subpage(self, steps, name):
             """Inserts a subpage into the notebook.  This assumes the file

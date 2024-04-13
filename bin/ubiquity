@@ -45,9 +45,11 @@ def force_utf8_locale():
     # apt now follows LC_NUMERIC; we must make sure it's set appropriately
     # so that debconf-apt-progress and uses of python-apt will be able to
     # parse pmstatus messages. (LP: #1611010)
+    #A: LC_NUMERIC is responsible for formatting numbers printed by the OS.
+    #A: https://www.baeldung.com/linux/locale-environment-variables#2-lcxxx
     os.environ["LC_NUMERIC"] = "C.UTF-8"
 
-    if locale.getpreferredencoding() != "UTF-8":
+    if locale.getpreferredencoding() != "UTF-8": #A: False
         try:
             os.environ["LC_ALL"] = "C.UTF-8"
             locale.setlocale(locale.LC_ALL, "")
@@ -58,7 +60,7 @@ def force_utf8_locale():
             sys.exit(1)
 
 
-def distribution():
+def distribution(): #A: -> "Linuxmint"
     """Returns the name of the running distribution."""
     proc = subprocess.Popen(
         ['lsb_release', '-is'], stdout=subprocess.PIPE,
@@ -240,14 +242,14 @@ def install(frontend=None, query=False):
     If frontend is None, defaults to the first of gtk_ui, kde_ui, and
     debconf_ui that exists.
     """
-    if frontend is None:
+    if frontend is None: #A: False
         frontends = ['gtk_ui', 'kde_ui', 'debconf_ui']
     else:
         frontends = [frontend]
     chosen = None
     for f in frontends:
         try:
-            ui = importlib.import_module('ubiquity.frontend.%s' % f)
+            ui = importlib.import_module('ubiquity.frontend.%s' % f) #A: ubiquity/frontent/gtk_ui.py
         except ImportError:
             continue
         chosen = f
@@ -259,13 +261,15 @@ def install(frontend=None, query=False):
         raise AttributeError('No frontend available; tried %s' %
                              ', '.join(frontends))
     os.environ['UBIQUITY_FRONTEND'] = chosen
-    if query:
+    if query: #A: False
         print(os.environ['UBIQUITY_FRONTEND'], file=sys.__stdout__)
         sys.exit(0)
 
-    unmount_target()
-    distro = distribution().lower()
+    unmount_target() #A: Does nothing
+
+    distro = distribution().lower() #A: "linuxmint"
     wizard = ui.Wizard(distro)
+
     if os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui':
         open_terminal()
         start_debconf()
@@ -436,7 +440,7 @@ def acquire_lock():
     lock.flush()
     os.fsync(lock.fileno())
 
-    if 'DEBIAN_HAS_FRONTEND' not in os.environ:
+    if 'DEBIAN_HAS_FRONTEND' not in os.environ: #A: True
         # Do a quick check to see if the debconf database is locked by
         # something else.
         test_debconf = subprocess.Popen(
@@ -528,45 +532,49 @@ def main(oem_config):
                            'is available.')
 
     (options, args) = parser.parse_args()
+    #A: options = {'debug': False, 'debug_pdb': False, 'cdebconf': False, 'automatic': False, 'query': False, 'only': None, 'greeter': None, 'bootloader': True, 'ldtp': None, 'autopilot': None, 'wireless': None}
+    #A: args = ['gtk_ui']
 
-    if options.debug:
+    if options.debug: #A: False
         os.environ['UBIQUITY_DEBUG'] = '1'
 
-    if options.debug_pdb:
+    if options.debug_pdb: #A: False
         os.environ['UBIQUITY_DEBUG_PDB'] = '1'
 
-    if options.cdebconf:
+    if options.cdebconf: #A: False
         # Note that this needs to be set before DebconfCommunicate is
         # imported by anything.
         os.environ['DEBCONF_USE_CDEBCONF'] = '1'
         prepend_path('/usr/lib/cdebconf')
+
     prepend_path('/usr/lib/ubiquity/compat')
 
-    if options.automatic:
+    if options.automatic: #A: False
         os.environ['UBIQUITY_AUTOMATIC'] = '1'
 
-    if options.greeter:
+    if options.greeter: #A: False
         os.environ['UBIQUITY_GREETER'] = '1'
 
-    if options.only:
+    if options.only: #A: False
         os.environ['UBIQUITY_ONLY'] = '1'
 
-    if not options.bootloader:
+    if not options.bootloader:  #A: False
         os.environ['UBIQUITY_NO_BOOTLOADER'] = '1'
 
-    if oem_config:
+    if oem_config:  #A: False
         os.environ['UBIQUITY_OEM_USER_CONFIG'] = '1'
         global TARGET
         TARGET = ''
 
-    if options.ldtp:
+    if options.ldtp:  #A: False
         os.environ['UBIQUITY_LDTP'] = '1'
 
-    if options.wireless:
+    if options.wireless: #A: False
         os.environ['UBIQUITY_WIRELESS'] = '1'
 
-    uid = os.getenv('PKEXEC_UID', False)
-    if uid:
+    uid = os.getenv('PKEXEC_UID', False) #A: Unset
+
+    if uid: #A: False
         # pkexec doesn't set username, but it's used in a few places.
         # fake it from PKEXEC =)
         os.environ['SUDO_USER'] = pwd.getpwuid(int(uid)).pw_name
@@ -580,38 +588,41 @@ def main(oem_config):
         # be happy if someone already created the path
         if e.errno != errno.EEXIST:
             raise
+
     syslog.openlog('ubiquity', syslog.LOG_NOWAIT | syslog.LOG_PID)
 
-    if oem_config:
+    if oem_config: #A: False
         syslog.syslog("Ubiquity %s (oem-config)" % VERSION)
     else:
         syslog.syslog("Ubiquity %s" % VERSION)
+
     with open('/var/log/installer/version', 'w') as version_file:
         print('ubiquity %s' % VERSION, file=version_file)
 
-    if options.autopilot:
+    if options.autopilot: #A: False
         os.environ['UBIQUITY_AUTOPILOT'] = '1'
         with open('/var/log/installer/autopilot', 'w') as autopilot_file:
             print('DBUS_SESSION_BUS_ADDRESS=%s' %
                   os.environ['DBUS_SESSION_BUS_ADDRESS'], file=autopilot_file)
             print('UBIQUITY_PID=%i' % os.getpid(), file=autopilot_file)
 
-    if 'UBIQUITY_DEBUG' in os.environ:
+    if 'UBIQUITY_DEBUG' in os.environ: #A: False
         if 'UBIQUITY_DEBUG_CORE' not in os.environ:
             os.environ['UBIQUITY_DEBUG_CORE'] = '1'
         if 'DEBCONF_DEBUG' not in os.environ:
             os.environ['DEBCONF_DEBUG'] = 'developer'
     # The frontend should take care of displaying a helpful message if
     # we are being run without root privileges.
-    if not (options.query and args and args[0] == 'noninteractive'):
+    #A:     False             True     False
+    if not (options.query and args and args[0] == 'noninteractive'): #A: True
         try:
-            if oem_config:
+            if oem_config: #A: False
                 logfile = '/var/log/oem-config.log'
             else:
                 logfile = '/var/log/installer/debug'
             log = os.open(logfile, os.O_WRONLY | os.O_CREAT | os.O_APPEND,
                           0o644)
-            os.dup2(log, 2)
+            os.dup2(log, 2) #A: stderr is fd 2, so all errors across the system (not just this process) will output to the file
             os.close(log)
             sys.stderr = os.fdopen(2, 'a', 1)
             if oem_config:
@@ -624,13 +635,13 @@ def main(oem_config):
 
     # Default to enabling internal (non-debconf) debugging except for when
     # using --automatic.
-    if 'UBIQUITY_DEBUG_CORE' not in os.environ:
-        if options.automatic:
+    if 'UBIQUITY_DEBUG_CORE' not in os.environ: #A: True
+        if options.automatic:                   #A: False
             os.environ['UBIQUITY_DEBUG_CORE'] = '1'
 
     # Initialise cdebconf if necessary, to work around
     # http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=451130.
-    if options.cdebconf:
+    if options.cdebconf: #A: False
         for package in ('ubiquity', 'keyboard-configuration', 'console-setup'):
             subprocess.call(['debconf-loadtemplate', package,
                              '/var/lib/dpkg/info/%s.templates' % package])
@@ -642,18 +653,18 @@ def main(oem_config):
     shutil.rmtree("/var/lib/partman", ignore_errors=True)
     misc.remove_os_prober_cache()
 
-    if oem_config and not options.query:
+    if oem_config and not options.query: #A: False
         disable_autologin()
 
-    if oem_config:
+    if oem_config: #A: False
         run_oem_hooks("/usr/lib/oem-config/pre-install")
 
-    if args:
+    if args: #A: True
         install(args[0], query=options.query)
     else:
         install(query=options.query)
 
-    if oem_config:
+    if oem_config: #A: False
         run_oem_hooks("/usr/lib/oem-config/post-install")
     im_switch.kill_im()
 
@@ -662,7 +673,7 @@ if __name__ == '__main__':
     # Are we running as ubiquity or oem-config?
     oem_config = False
     script_name = os.path.basename(sys.argv[0])
-    if script_name == 'oem-config':
+    if script_name == 'oem-config': #A: False
         oem_config = True
 
     main(oem_config)
