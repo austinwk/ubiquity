@@ -170,21 +170,22 @@ class BaseFrontend:
         #A: ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup, ubi-network
         modules = plugin_manager.order_plugins(plugins)
 
+        #A: All do
         self.modules = []
         for mod in modules:
             comp = Component()
             comp.module = mod
-            if hasattr(mod, 'Page'):
+            if hasattr(mod, 'Page'): #A: All except for ubi-wireless
                 comp.filter_class = mod.Page
             self.modules.append(comp)
 
         if not self.modules:
             raise ValueError('No valid steps.')
 
-        if 'SUDO_USER' in os.environ:
+        if 'SUDO_USER' in os.environ: #A: True
             os.environ['SCIM_USER'] = os.environ['SUDO_USER']
             os.environ['SCIM_HOME'] = os.path.expanduser(
-                '~%s' % os.environ['SUDO_USER'])
+                '~%s' % os.environ['SUDO_USER']) #A: '/home/mint'
 
     def _abstract(self, method):
         raise NotImplementedError("%s.%s does not implement %s" %

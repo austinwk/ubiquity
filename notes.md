@@ -18,30 +18,43 @@ Execution
 
 ## Environment
 
-```python
+```json
 {
-    'SUDO_GID': '999',
-    'MAIL': '/var/mail/root'
-    'USER': 'root'
-    'HOME': '/root'
-    'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/999/bus',
-    'COLORTERM': 'truecolor',
-    'SUDO_UID': '999',
-    'LOGNAME': 'root',
-    'TERM': 'unknown',
-    'PATH': '/usr/lib/ubiquity/compat:/usr/local/sbin:/user/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin',
-    'XDG_RUNTIME_DIR': '/run/user/999',
-    'DISPLAY': ':0',
-    'LANG': 'C.UTF-8',
-    'XDG_CURRENT_DESKTOP': 'X-Cinnamon',
-    'WEBKIT_DISABLE_COMPOSITING_MODE': '1',
-    'XAUTHORITY': '/home/mint/.Xauthority',
-    'SUDO_COMMAND': '/usr/bin/sh -c WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui',
-    'SHELL': '/bin/bash',
-    'SUDO_USER': 'mint',
-    'PWD': '/home/mint
-    'XDG_DATA_DIRS': '/usr/share/cinnamon:/usr/share/gnome:/home/mint/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share',
-    'LC_NUMERIC': 'C.UTF-8'
+    // Initial
+    "SUDO_GID": "999",
+    "MAIL": "/var/mail/root",
+    "USER": "root",
+    "HOME": "/root",
+    "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/999/bus",
+    "SUDO_UID": "999",
+    "LOGNAME": "root",
+    "TERM": "unknown",
+    "PATH": "/usr/local/sbin:/user/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin",
+    "XDG_RUNTIME_DIR": "/run/user/999",
+    "DISPLAY": ":0",
+    "LANG": "C.UTF-8",
+    "XDG_CURRENT_DESKTOP": "X-Cinnamon",
+    "WEBKIT_DISABLE_COMPOSITING_MODE": "1",
+    "XAUTHORITY": "/home/mint/.Xauthority",
+    "SUDO_COMMAND": "/usr/bin/sh -c WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui",
+    "SHELL": "/bin/bash",
+    "SUDO_USER": "mint",
+    "PWD": "/home/mint",
+    "XDG_DATA_DIRS": "/usr/share/cinnamon:/usr/share/gnome:/home/mint/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share",
+
+    // bin/ubiquity.force_utf8_locale()
+    "LC_NUMERIC": "C.UTF-8",
+
+    // bin/ubiquity.install()
+    "UBIQUITY_FRONTEND": "gtk_ui",
+
+    // ubiquity/frontend/base.BaseFrontend.__init__()
+    "SCIM_USER": "SUDO_USER",
+    "SCIM_HOME": "/home/mint",
+
+    // ubiquity/i18n.reset_locale()
+    "LANG": "en_US.UTF-8", // Changed from above
+    "LANGUAGE": "en_US.UTF-8",
 }
 ```
 

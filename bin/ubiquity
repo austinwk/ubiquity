@@ -247,14 +247,14 @@ def install(frontend=None, query=False):
     else:
         frontends = [frontend]
     chosen = None
-    for f in frontends:
+    for f in frontends: #A: ['gtk_ui']
         try:
-            ui = importlib.import_module('ubiquity.frontend.%s' % f) #A: ubiquity/frontent/gtk_ui.py
+            ui = importlib.import_module('ubiquity.frontend.%s' % f) #A: ubiquity/frontend/gtk_ui.py
         except ImportError:
             continue
         chosen = f
         # Noninteractive implies automatic mode.
-        if f == 'noninteractive':
+        if f == 'noninteractive': #A: False
             os.environ['UBIQUITY_AUTOMATIC'] = '1'
         break
     else:
@@ -268,7 +268,7 @@ def install(frontend=None, query=False):
     unmount_target() #A: Does nothing
 
     distro = distribution().lower() #A: "linuxmint"
-    wizard = ui.Wizard(distro)
+    wizard = ui.Wizard(distro) #A: ubiquity/frontend/gtk_ui.Wizard('linuxmint')
 
     if os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui':
         open_terminal()

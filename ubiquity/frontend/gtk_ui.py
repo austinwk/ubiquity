@@ -262,16 +262,16 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
         self.have_apt_updated = False
 
         # To get a "busy mouse":
-        self.watch = Gdk.Cursor.new(Gdk.CursorType.WATCH)
+        self.watch = Gdk.Cursor.new(Gdk.CursorType.WATCH) #A: "watch" as in "clock/hourglass"
         self.set_busy_cursor(True)
         atexit.register(set_root_cursor)
 
         # Are we running alongside Orca?
         with open('/proc/cmdline') as fp:
-            if 'access=v3' in fp.read():
+            if 'access=v3' in fp.read(): #A: False
                 self.screen_reader = True
 
-        if 'UBIQUITY_ONLY' in os.environ:
+        if 'UBIQUITY_ONLY' in os.environ: #A: False
             # do not run this as root. The API pretends to be synchronous but
             # it is actually asynchronous. If you become root before it
             # finishes then D-Bus will reject our connection due to a
