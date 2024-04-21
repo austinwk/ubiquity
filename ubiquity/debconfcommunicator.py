@@ -26,7 +26,7 @@ from ubiquity import misc
 
 
 class DebconfCommunicator(debconf.Debconf):
-    def __init__(self, owner, title=None, cloexec=False, env=None):
+    def __init__(self, owner, title=None, cloexec=False, env=None): #A: title='ubiquity', cloexec=True
         self.dccomm = subprocess.Popen(
             ['debconf-communicate', '-fnoninteractive', owner],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE,

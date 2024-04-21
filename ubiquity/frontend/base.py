@@ -41,7 +41,7 @@ WGET_HASH = '4589f42e1546aa47ca181e5d949d310b'
 
 class Controller:
     def __init__(self, wizard):
-        self._wizard = wizard
+        self._wizard = wizard #A: ubiquity.frontend.gtk_ui.Wizard
         self.dbfilter = None
         self.oem_config = wizard.oem_config
         self.oem_user_config = wizard.oem_user_config
@@ -76,11 +76,17 @@ class Controller:
 
 class Component:
     def __init__(self):
-        self.module = None
-        self.controller = None
-        self.filter_class = None
-        self.ui_class = None
-        self.ui = None
+        #A: Set by BaseFrontend
+        self.module = None       #A: types.ModuleType
+        self.filter_class = None #A: ubiquity.plugins.<plugin>.Page
+        #A: Set by gtk_ui.Wizard
+        self.controller = None   #A: Controller
+        self.ui_class = None     #A: ubiquity.plugins.<plugin>.PageGtk
+        self.ui = None           #A: instance of self.ui_class
+        #A: Properties added in gtk_ui.Wizard
+        #A: self.widgets             Gtk.Widget[]
+        #A: self.optional_widgets    Gtk.Widget[]
+        #A: self.all_widgets         Gtk.Widget[] (a concatenation of widgets and optional_widgets)
 
 
 class BaseFrontend:
@@ -170,8 +176,7 @@ class BaseFrontend:
         #A: ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup, ubi-network
         modules = plugin_manager.order_plugins(plugins)
 
-        #A: All do
-        self.modules = []
+        self.modules = [] #A: Component[]
         for mod in modules:
             comp = Component()
             comp.module = mod

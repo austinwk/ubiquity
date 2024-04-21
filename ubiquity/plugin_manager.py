@@ -28,7 +28,7 @@ PLUGIN_PATH = (os.environ.get('UBIQUITY_PLUGIN_PATH', False) or #A: False
                '/usr/lib/ubiquity/plugins')
 
 
-def load_plugin(modname):
+def load_plugin(modname): #A: string -> ModuleType
     sys.path.insert(0, PLUGIN_PATH)
     try:
         return importlib.import_module(modname)
@@ -36,7 +36,7 @@ def load_plugin(modname):
         del sys.path[0]
 
 
-def load_plugins():
+def load_plugins(): #A: -> ModuleType[]
     modules = []
     #A: ubi-console-setup.py, ubi-language.py, ubi-network.py, ubi-partman.py, ubi-prepare.py, ubi-timezone.py, ubi-usersetup.py, ubi-wireless.py
     modfiles = [x for x in os.listdir(PLUGIN_PATH)

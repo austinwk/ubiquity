@@ -39,12 +39,12 @@ class PageGtk(plugin.PluginUI):
         self.keyboard_variant_timeout_id = 0
         try:
             from gi.repository import Gtk
-            builder = Gtk.Builder()
+            builder = Gtk.Builder() #A: TODO Need to learn more about this
             self.controller.add_builder(builder)
             builder.add_from_file(os.path.join(
                 os.environ['UBIQUITY_GLADE'], 'stepKeyboardConf.ui'))
             builder.connect_signals(self)
-            self.page = builder.get_object('stepKeyboardConf')
+            self.page = builder.get_object('stepKeyboardConf') #A: GtkWidget
             self.keyboardlayoutview = builder.get_object('keyboardlayoutview')
             self.keyboardvariantview = builder.get_object(
                 'keyboardvariantview')

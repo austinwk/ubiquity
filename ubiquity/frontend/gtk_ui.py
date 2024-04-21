@@ -178,8 +178,8 @@ def on_screen_reader_enabled_changed(gsettings, key):
             del os.environ['UBIQUITY_A11Y_PROFILE']
 
 
-class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
-    def __init__(self, distro):
+class Wizard(BaseFrontend):
+    def __init__(self, distro): #A: distro = 'linuxmint
         def add_subpage(self, steps, name):
             """Inserts a subpage into the notebook.  This assumes the file
             shares the same base name as the page you are looking for."""
@@ -198,8 +198,8 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
             if not isinstance(widget, Gtk.Widget):
                 return
             name = Gtk.Buildable.get_name(widget)
-            widget.set_name(name)
-            if 'UBIQUITY_LDTP' in os.environ:
+            widget.set_name(name) #A: Allows you to refer to the widget from a CSS file
+            if 'UBIQUITY_LDTP' in os.environ: #A: False
                 atk_desc = widget.get_accessible()
                 atk_desc.set_name(name)
             self.all_widgets.add(widget)
@@ -249,7 +249,7 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
         self.ubuntu_drivers = None
         self.returncode = 0
         self.history = []
-        self.builder = Gtk.Builder()
+        self.builder = Gtk.Builder() #A: After loading `ubiquity.ui` this is a Gtk.Notebook
         self.grub_options = Gtk.ListStore(
             GObject.TYPE_STRING, GObject.TYPE_STRING)
         self.finished_installing = False
@@ -322,8 +322,8 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
             Gdk.Screen.get_default(),
             provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
-        # load the main interface
-        self.builder.add_from_file('%s/ubiquity.ui' % UIDIR)
+        # Load the main UI, which is a Gtk.Notebook
+        self.builder.add_from_file('%s/ubiquity.ui' % UIDIR) #A: /usr/share/ubiquity/gtk/ubiquity.ui
 
         self.builders = [self.builder]
         self.pages = []
@@ -331,8 +331,8 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
         self.pageslen = 0
         steps = self.builder.get_object("steps")
         found_install = False
-        for mod in self.modules:
-            if hasattr(mod.module, 'PageGtk'):
+        for mod in self.modules: #A: Component[]
+            if hasattr(mod.module, 'PageGtk'): #A: all except ubi-network
                 mod.ui_class = mod.module.PageGtk
                 mod.controller = Controller(self)
                 mod.ui = mod.ui_class(mod.controller)
@@ -340,7 +340,10 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
                 widgets = mod.ui.get('plugin_widgets')
                 optional_widgets = mod.ui.get('plugin_optional_widgets')
                 if not found_install:
-                    found_install = mod.ui.get('plugin_is_install')
+                    found_install = mod.ui.get('plugin_is_install') #A: ubi-partman
+                #A: all except ubi-network
+                #A: widgets: no plugins have multiple widgets
+                #A: optional_widgets: Only ubi-partman and ubi-prepare have optional_widgets
                 if widgets or optional_widgets:
                     def fill_out(widget_list):
                         rv = []
@@ -352,27 +355,29 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
                             if isinstance(w, str):
                                 w = add_subpage(self, steps, w)
                             else:
-                                steps.append_page(w, None)
+                                steps.append_page(w, None) #A: Append the page to the Gtk.Notebook
                             rv.append(w)
                         return rv
+                    #A: Grrr. Not explicitly defined properties of Component
                     mod.widgets = fill_out(widgets)
                     mod.optional_widgets = fill_out(optional_widgets)
                     mod.all_widgets = mod.widgets + mod.optional_widgets
+
                     self.pageslen += 1
                     self.pages.append(mod)
 
         # If no plugins declare they are install, then we'll say the last one
         # is
-        if not found_install:
+        if not found_install: #A: False (ubi-partman is install)
             self.pages[self.pageslen - 1].ui.plugin_is_install = True
 
         self.toplevels = set()
-        for builder in self.builders:
-            for widget in builder.get_objects():
-                add_widget(self, widget)
+        for builder in self.builders: #A: There's only one
+            for widget in builder.get_objects(): #A: 101 objects. Every Label, Box, Image, etc
+                add_widget(self, widget) #A: Adds objects as properties so you can call things like `self.next` to reference the "next" button.
                 if isinstance(widget, Gtk.Window):
                     self.toplevels.add(widget)
-        self.builder.connect_signals(self)
+        self.builder.connect_signals(self) #A: Objects like buttons can have associated functions. For example the "next" button calls `on_next_clicked`
 
         for mod in self.pages:
             progress = Gtk.ProgressBar()
@@ -1204,7 +1209,7 @@ class Wizard(BaseFrontend): #A: BaseFrontend = "linuxmint"
     def set_locales(self):
         """internationalization config. Use only once."""
 
-        domain = self.distro + '-installer'
+        domain = self.distro + '-installer' #A: linuxmint-installer
         gettext.bindtextdomain(domain, LOCALEDIR)
         self.builder.set_translation_domain(domain)
         gettext.textdomain(domain)

@@ -1,5 +1,7 @@
 # Notes
 
+[PyGObject API](https://lazka.github.io/pgi-docs/)
+
 Execution
 
 1. Double clicking the desktop icon runs: `sudo --preserve-env=DBUS_SESSION_BUS_ADDRESS,XDG_DATA_DIRS,XDG_RUNTIME_DIR sh -c 'WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui'`
@@ -55,9 +57,99 @@ Execution
     // ubiquity/i18n.reset_locale()
     "LANG": "en_US.UTF-8", // Changed from above
     "LANGUAGE": "en_US.UTF-8",
+
+    // ubiquity/frontend/gtk_ui.py (on import)
+    "UBIQUITY_GLADE": "/usr/share/ubiquity/gtk"
 }
 ```
 
 ## Questions
 
 When is [debian/ubiquity.templates](debian/ubiquity.templates) applied? During the build process?
+
+## GUI
+
+started by calling ubiquity/frontend/gtk_ui.Wizard('linuxmint')
+
+gtk_ui.Wizard -> base.BaseFrontend
+
+plugin.PageGtk -> PageBase
+
+Wizard (class)
+
+* Inherits from BaseFrontend
+* Manages Gtk.Builder
+  * Manages the GtkWindow (root ui), which is in gui/gtk/ubiquity.ui
+
+BaseFrontend (class)
+
+* Manages debconf-communicate via DebconfCommunicator. DebconfCommunicator inherits from debconf.Debconf, which is an external library.
+* Loads and orders ubiquity/plugins via plugin_manager. Plugins are modules. Each module represents a step in the installation: language, partitioning, user, etc
+
+Plugins (modules in ubiquity/plugins)
+
+* All plugins (except ubi_wireless) have a Page and a PageGtk class.
+* All plugins (except ubi_wireless) are wrapped in a Component that exposes their Page, PageGtk, classes.
+* All plugins have a `plugin_widgets` property
+  * At least has one reference to `self.page`
+
+PageGtk (class in all but one plugin)
+
+* Inherits from PageBase (which is defined in each plugin)
+
+PageBase (class in all but one plugin)
+
+* Inherits from plugin.PluginUI
+
+PluginUI (class)
+
+* Inherits from UntrustedBase
+
+## Plugins (sorted as in BaseFrontend)
+
+ubi-language
+
+* `page`: Gtk.Builder of `stepLanguage.ui`
+* `plugin_widgets`: `page`
+* `plugin_optional_widgets`: -
+
+ubi-console-setup
+
+* `page`: Gtk.Builder of `stepKeyboardConf.ui`
+* `plugin_widgets`: `page`
+* `plugin_optional_widgets`: -
+
+ubi-wireless
+
+* `page`: Gtk.Builder of `stepWireless.ui`
+* `plugin_widgets`: `page`
+* `plugin_optional_widgets`: -
+
+ubi-prepare
+
+* `page`: Uses something different
+* `plugin_widgets`: stepPrepare
+* `plugin_optional_widgets`: stepNoSpace, stepRST
+
+ubi-partman
+
+* `page`: Uses something different
+* `plugin_widgets`: stepPartAsk
+* `plugin_optional_widgets`: stepPartAuto, stepPartAdvanced, stepPartCrypto, stepBitlocker
+* `plugin_is_install`: True
+
+ubi-timezone
+
+* `page`: Gtk.Builder of `stepLocation.ui`
+* `plugin_widgets`: `page`
+* `plugin_optional_widgets`: -
+
+ubi-usersetup
+
+* `page`: Gtk.Builder of `stepUserInfo.ui`
+* `plugin_widgets`: `page`
+* `optional_widgets`: -
+
+ubi-network
+
+Note: "network component only usable with debconf frontend"

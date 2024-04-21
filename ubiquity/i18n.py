@@ -39,8 +39,8 @@ def reset_locale(frontend):
         # languagechooser/language-name and set a language based on
         # that?
         di_locale = 'en_US.UTF-8'
-        
-    if 'LANG' not in os.environ or di_locale != os.environ['LANG']:
+
+    if 'LANG' not in os.environ or di_locale != os.environ['LANG']: #A: True
         os.environ['LANG'] = di_locale
         os.environ['LANGUAGE'] = di_locale
         try:
