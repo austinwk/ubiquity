@@ -20,20 +20,25 @@ Execution
 
 ## Debugging
 
-Add breakpoints to _/usr/lib/ubiquity/bin/ubiquity_, then execute the installer script (used by the icon on the desktop) from the terminal.
+Any `breakpoint()` after the following will not be accessible in the terminal.
+
+/usr/lib/python3/dist-packages/debconf.py
 
 ```python
-import pdb                  # <--- Add
-# ...
-def install(frontend=None, query=False):
+class Debconf:
     # ...
-    breakpoint()            # <--- Watch the ui get built
-    wizard = ui.Wizard(distro)
-    if os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui':
-        open_terminal()
-        start_debconf()
-    breakpoint()            # <--- Watch the ui run
-    ret = wizard.run()
+    def __init__(self, title=None, read=None, write=None, run_frontend=False):
+        for command in ('capb set reset title input beginblock endblock go get'
+                        ' register unregister subst fset fget previous_module'
+                        ' visible purge metaget exist version settitle'
+                        ' info progress data').split():
+            self.setCommand(command)
+        self.read = read or sys.stdin
+        self.write = write or sys.stdout
+        sys.stdout = sys.stderr                      # <---
+        if run_frontend:
+            runFrontEnd()
+        self.setUp(title)
 ```
 
 ## Environment
