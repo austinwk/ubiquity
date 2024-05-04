@@ -849,7 +849,7 @@ class Wizard(BaseFrontend):
         self.disable_screen_blanking()
         self.disable_powermgr()
 
-        if 'UBIQUITY_ONLY' in os.environ:
+        if 'UBIQUITY_ONLY' in os.environ: #A: False
             self.disable_logout_indicator()
             if 'UBIQUITY_DEBUG' not in os.environ:
                 self.disable_terminal()
@@ -861,7 +861,7 @@ class Wizard(BaseFrontend):
         self.grub_new_device_entry.connect(
             'changed', self.grub_verify_loop, self.grub_fail_okbutton)
 
-        if 'UBIQUITY_AUTOMATIC' in os.environ:
+        if 'UBIQUITY_AUTOMATIC' in os.environ: #A: False
             self.debconf_progress_start(
                 0, self.pageslen, self.get_string('ubiquity/install/checking'))
             self.debconf_progress_cancellable(False)
@@ -871,22 +871,26 @@ class Wizard(BaseFrontend):
         telemetry.get().set_is_oem(self.oem_config)
 
         self.set_current_page(0)
-        self.live_installer.show()
+        self.live_installer.show() #A: live_installer: Gtk.Widget
 
         while (self.pagesindex < len(self.pages)):
             if self.current_page is None:
                 return self.returncode
 
-            page = self.pages[self.pagesindex]
+            page = self.pages[self.pagesindex] #A: page: Base.Component
             skip = False
-            if hasattr(page.ui, 'plugin_skip_page'):
+
+            if hasattr(page.ui, 'plugin_skip_page'): #A: Only ubi-wireless
                 if page.ui.plugin_skip_page():
                     skip = True
+
             automatic = False
-            if hasattr(page.ui, 'is_automatic'):
+            if hasattr(page.ui, 'is_automatic'): #A: None
                 automatic = page.ui.is_automatic
 
-            if not skip and not page.filter_class:
+            #A: filter_class = <plugin>.Page (ex: ubi-language.Page)
+            #A: Except for ubi-wireless which is None
+            if not skip and not page.filter_class: #A: Only ubi-wireless
                 # This page is just a UI page
                 self.dbfilter = None
                 self.dbfilter_status = None
@@ -1046,14 +1050,14 @@ class Wizard(BaseFrontend):
             style.add_class('ubiquity-menubar')
 
         # TODO lazy load
-        import gi
-        gi.require_version("Vte", "2.91")
-        gi.require_version("Pango", "1.0")
+        import gi #A: GObject introspection
+        gi.require_version("Vte", "2.91")  #A: Terminal emulator widget
+        gi.require_version("Pango", "1.0") #A: Fonts
         from gi.repository import Vte, Pango
         misc.drop_privileges_save()
         self.vte = Vte.Terminal()
-        self.install_details_sw.add(self.vte)
-        tail_cmd = [
+        self.install_details_sw.add(self.vte) #A: Scroll window
+        tail_cmd = [ #A: busybox provides versions of common unix utils in a single exe
             '/bin/busybox', 'tail', '-f', '/var/log/installer/debug',
             '-f', '/var/log/syslog', '-q',
         ]

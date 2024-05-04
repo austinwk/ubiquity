@@ -270,21 +270,27 @@ def install(frontend=None, query=False):
     distro = distribution().lower() #A: "linuxmint"
     wizard = ui.Wizard(distro) #A: ubiquity/frontend/gtk_ui.Wizard('linuxmint')
 
-    if os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui':
+    if os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui': #A: False
         open_terminal()
         start_debconf()
+
     ret = wizard.run()
+
     wizard.stop_debconf()
+
     if ret != 10 and 'UBIQUITY_GREETER' in os.environ:
         import traceback
         try:
             apply_keyboard()
         except Exception:
             traceback.print_exc()
+
     copy_debconf()
     unmount_target()
+
     if ret == 10:
         wizard.do_reboot()
+        
     if ret == 11:
         wizard.do_shutdown()
 

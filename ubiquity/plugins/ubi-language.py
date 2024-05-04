@@ -69,17 +69,20 @@ class PageGtk(PageBase):
         self.timeout_id = None
         self.wget_retcode = None
         self.wget_proc = None
-        if self.controller.oem_user_config:
+
+        if self.controller.oem_user_config: #A: False
             ui_file = 'stepLanguageOnly.ui'
             self.only = True
         else:
             ui_file = 'stepLanguage.ui'
             self.only = False
+
         from gi.repository import Gtk
+
         builder = Gtk.Builder()
-        builder.add_from_file(os.path.join(
-            os.environ['UBIQUITY_GLADE'], ui_file))
+        builder.add_from_file(os.path.join(os.environ['UBIQUITY_GLADE'], ui_file))
         builder.connect_signals(self)
+
         self.controller.add_builder(builder)
         self.page = builder.get_object('stepLanguage')
         self.iconview = builder.get_object('language_iconview')

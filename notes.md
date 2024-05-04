@@ -4,7 +4,7 @@
 
 Execution
 
-1. Double clicking the desktop icon runs: `sudo --preserve-env=DBUS_SESSION_BUS_ADDRESS,XDG_DATA_DIRS,XDG_RUNTIME_DIR sh -c 'WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui'`
+1. Double clicking the desktop icon runs: `sudo --preserve-env=DBUS_SESSION_BUS_ADDRESS,XDG_DATA_DIRS,XDG_RUNTIME_DIR sh -c 'WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui'` (-c tells `sh` to read commands from a string)
 2. Which executes: `/usr/bin/ubiquity` (src: [bin/ubiquity-wrapper](bin/ubiquity-wrapper))
 3. Which calls `/usr/lib/ubiquity/bin/ubiquity` (src: [bin/ubiquity](bin/ubiquity))
 
@@ -17,6 +17,24 @@ Execution
 `debconf` package is `/lib/python3/dist-packages/debconf.py`
 
 `Debconf.get(...)` and `Debconf.set(...)` (and others) are added by `Debconf.setCommand(...)`
+
+## Debugging
+
+Add breakpoints to _/usr/lib/ubiquity/bin/ubiquity_, then execute the installer script (used by the icon on the desktop) from the terminal.
+
+```python
+import pdb                  # <--- Add
+# ...
+def install(frontend=None, query=False):
+    # ...
+    breakpoint()            # <--- Watch the ui get built
+    wizard = ui.Wizard(distro)
+    if os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui':
+        open_terminal()
+        start_debconf()
+    breakpoint()            # <--- Watch the ui run
+    ret = wizard.run()
+```
 
 ## Environment
 
