@@ -90,6 +90,25 @@ class Debconf:
 
 When is [debian/ubiquity.templates](debian/ubiquity.templates) applied? During the build process?
 
+## debconf
+
+* capb
+* command
+* fget
+* fset
+* get
+* go
+* info
+* input
+* metaget
+* progress
+* register
+* reset
+* set
+* settitle
+* shutdown
+* subst
+
 ## GUI
 
 started by calling ubiquity/frontend/gtk_ui.Wizard('linuxmint')

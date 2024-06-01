@@ -88,7 +88,8 @@ class PageGtk(PageBase):
         self.iconview = builder.get_object('language_iconview')
         self.treeview = builder.get_object('language_treeview')
         self.oem_id_entry = builder.get_object('oem_id_entry')
-        if self.controller.oem_config:
+
+        if self.controller.oem_config: #A: False
             builder.get_object('oem_id_vbox').show()
 
         self.release_notes_url = ''
@@ -111,7 +112,8 @@ class PageGtk(PageBase):
                 pass
         self.install_ubuntu = builder.get_object('install_ubuntu')
         self.try_ubuntu = builder.get_object('try_ubuntu')
-        if not self.only:
+
+        if not self.only: #A: True
             if 'UBIQUITY_GREETER' not in os.environ:
                 choice_section_vbox = builder.get_object('choice_section_vbox')
                 choice_section_vbox and choice_section_vbox.hide()
@@ -645,19 +647,23 @@ class Page(plugin.Plugin):
     def prepare(self, unfiltered=False):
         self.language_question = None
         self.initial_language = None
+
         self.db.fset('localechooser/languagelist', 'seen', 'false')
+
         with misc.raised_privileges():
+            #A: These don't exist
             osextras.unlink_force('/var/lib/localechooser/preseeded')
             osextras.unlink_force('/var/lib/localechooser/langlevel')
+
         if self.ui.controller.oem_config:
             try:
                 self.ui.set_oem_id(self.db.get('oem-config/id'))
             except debconf.DebconfError:
                 pass
 
-        localechooser_script = '/usr/lib/ubiquity/localechooser/localechooser'
+        localechooser_script = '/usr/lib/ubiquity/localechooser/localechooser' #A: d-i/source/localechooser/localechooser
         if ('UBIQUITY_FRONTEND' in os.environ and
-                os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui'):
+                os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui'): #A: True
             localechooser_script += '-debconf'
 
         questions = ['localechooser/languagelist']
@@ -665,23 +671,26 @@ class Page(plugin.Plugin):
             'PATH': '/usr/lib/ubiquity/localechooser:' + os.environ['PATH'],
         }
         if ('UBIQUITY_FRONTEND' in os.environ and
-                os.environ['UBIQUITY_FRONTEND'] == "debconf_ui"):
+                os.environ['UBIQUITY_FRONTEND'] == "debconf_ui"): #A: False
             environ['TERM_FRAMEBUFFER'] = '1'
         else:
             environ['OVERRIDE_SHOW_ALL_LANGUAGES'] = '1'
         return localechooser_script, questions, environ
 
     def run(self, priority, question):
-        if question == 'localechooser/languagelist':
+        if question == 'localechooser/languagelist': #A: True
             self.language_question = question
-            if self.initial_language is None:
-                self.initial_language = self.db.get(question)
-            current_language_index = self.value_index(question)
+
+            if self.initial_language is None: #A: True
+                self.initial_language = self.db.get(question) #A: 'en'
+
+            current_language_index = self.value_index(question) #A: 21
+
             only_installable = misc.create_bool(
-                self.db.get('ubiquity/only-show-installable-languages'))
+                self.db.get('ubiquity/only-show-installable-languages')) #A: False
 
             current_language, sorted_choices, language_display_map = \
-                i18n.get_languages(current_language_index, only_installable)
+                i18n.get_languages(current_language_index, only_installable) #A: 'English', [..., 'English', ...], {'No localization (UTF-8)': ('C.UTF-8', 'C.UTF-8'), ...}
 
             self.ui.set_language_choices(sorted_choices,
                                          language_display_map)
@@ -697,14 +706,18 @@ class Page(plugin.Plugin):
         plugin.Plugin.cancel_handler(self)
 
     def ok_handler(self):
-        if self.language_question is not None:
-            new_language = self.ui.get_language()
+        if self.language_question is not None: #A: True
+            new_language = self.ui.get_language() #A: 'en'
+
             self.preseed(self.language_question, new_language)
+
             if (self.initial_language is None or
-                    self.initial_language != new_language):
+                    self.initial_language != new_language): #A: False
                 self.db.reset('debian-installer/country')
-        if self.ui.controller.oem_config:
+
+        if self.ui.controller.oem_config: #A: False
             self.preseed('oem-config/id', self.ui.get_oem_id())
+
         plugin.Plugin.ok_handler(self)
 
     def cleanup(self):

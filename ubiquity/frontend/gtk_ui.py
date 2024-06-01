@@ -335,7 +335,7 @@ class Wizard(BaseFrontend):
             if hasattr(mod.module, 'PageGtk'): #A: all except ubi-network
                 mod.ui_class = mod.module.PageGtk
                 mod.controller = Controller(self)
-                mod.ui = mod.ui_class(mod.controller)
+                mod.ui = mod.ui_class(mod.controller) #A: Instantiate the module/plugin UI (PageGtk)
                 mod.title = mod.ui.get('plugin_title')
                 widgets = mod.ui.get('plugin_widgets')
                 optional_widgets = mod.ui.get('plugin_optional_widgets')
@@ -903,15 +903,17 @@ class Wizard(BaseFrontend):
                 else:
                     ui = None
                 self.start_debconf()
-                self.dbfilter = page.filter_class(self, ui=ui)
+                self.dbfilter = page.filter_class(self, ui=ui) #A: <ubi-___>.Page(self, ui=<ubi-___>.PageGtk)
 
                 if self.dbfilter is not None and self.dbfilter != old_dbfilter:
                     self.allow_change_step(False)
+                    #A: Opens the main window, but no page is displayed yet (so the window is empty).
+                    #A: Adds a function to be called whenever there are no higher priority events pending to the default main loop.
                     GLib.idle_add(
-                        lambda: self.dbfilter.start(auto_process=True))
+                        lambda: self.dbfilter.start(auto_process=True)) #A: Page -> Plugin -> FilteredCommand.start(...)
 
                 page.controller.dbfilter = self.dbfilter
-                Gtk.main()
+                Gtk.main() #A: Shows the first page. Control is passed to Gtk until an event from the page occurs.
                 self.pending_quits = max(0, self.pending_quits - 1)
                 page.controller.dbfilter = None
 
@@ -1621,6 +1623,7 @@ class Wizard(BaseFrontend):
             self.quit_main_loop()
 
     def process_step(self):
+        #A: Is this description accurate? Doesn't seem to be.
         """Process and validate the results of this step."""
         # setting actual step
         step_num = self.steps.get_current_page()

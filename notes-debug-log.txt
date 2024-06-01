@@ -1,0 +1,7 @@
+Ubiquity 22.04.16+mint18
+--- Initializing debconf ------------------------------------------------------
+debconf (developer): <-- VERSION 2
+debconf (developer): --> 0 2.0
+debconf (developer): <-- CAPB
+debconf (developer): --> 0 multiselect escape
+---
