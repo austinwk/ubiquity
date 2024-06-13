@@ -440,25 +440,29 @@ class PageGtk(PageBase):
                 os.environ.get('SHOW_BITLOCKER_UI', '0') == '1')
 
     def plugin_on_next_clicked(self):
-        reuse = self.reuse_partition.get_active()
-        replace = self.replace_partition.get_active()
-        resize = self.resize_use_free.get_active()
-        custom = self.custom_partitioning.get_active()
+        reuse = self.reuse_partition.get_active() #A: False
+        replace = self.replace_partition.get_active() #A: False
+        resize = self.resize_use_free.get_active() #A: False
+        custom = self.custom_partitioning.get_active() #A: False
         use_zfs = self.use_zfs.get_active()
         # ZFS is installed on entire drive.
+        #A:          True                            False
         use_device = self.use_device.get_active() or use_zfs
-        biggest_free = 'biggest_free' in self.extra_options
-        crypto = self.use_crypto.get_active()
+        biggest_free = 'biggest_free' in self.extra_options #A: False
+        crypto = self.use_crypto.get_active() #A: True
+        #A: ('Guided - use entire disk', OrderedDict([('SCSI3 (0,0,0) (sda) - 33.4 GB ATA VBOX HARDDISK', ('/var/lib/partman/devices/=dev=sda', 33427831136))]))
         disks = self.extra_options.get('use_device', [])
-        if disks:
-            disks = disks[1]
-        one_disk = len(disks) == 1
 
-        if self.current_page == self.page_bitlocker:
+        if disks: #A: True
+            disks = disks[1] #A: OrderedDict([('SCSI3 (0,0,0) (sda) - 33.4 GB ATA VBOX HARDDISK', ('/var/lib/partman/devices/=dev=sda', 33427831136))])
+
+        one_disk = len(disks) == 1 #A: True
+
+        if self.current_page == self.page_bitlocker: #A: False
             self.controller._wizard.do_reboot()
             return True
 
-        if resize and self.should_show_bitlocker_page():
+        if resize and self.should_show_bitlocker_page(): #A: False
             title = self.controller.get_string('ubiquity/text/bitlocker_header')
             self.set_page_title(title)
             self.current_page = self.page_bitlocker
@@ -468,7 +472,7 @@ class PageGtk(PageBase):
             self.plugin_is_install = False
             return True
 
-        if custom:
+        if custom: #A: False
             self.set_page_title(self.custom_partitioning.get_label())
             self.current_page = self.page_advanced
             self.move_crypto_widgets(auto=False)
@@ -481,20 +485,28 @@ class PageGtk(PageBase):
         # Setting the model early on, because if there is only one
         # disk, we switch to install interface staight away and it
         # queries the model to get the disk
-        if self.current_page == self.page_ask:
-            m = self.part_auto_select_drive.get_model()
-            m.clear()
-            if use_device:
+        if self.current_page == self.page_ask: #A: True
+            #A: self.part_auto_select_drive is a Gtk.ComboBox
+            m = self.part_auto_select_drive.get_model() #A: Gtk.ListStore
+            m.clear() #A: It's already empty (check with `len(m)`)
+
+            if use_device: #A: True
                 for disk in disks:
-                    m.append([disk, ''])
+                    m.append([disk, '']) #A: gi.overrides.Gtk.TreeModelRow
+
                 self.part_auto_select_drive.set_active(0)
 
         # Currently we support crypto only in use_disk
         # TODO dmitrij.ledkov 2012-07-25 no way to go back and return
         # to here? This needs to be addressed in the design document.
-        if (crypto and use_device and self.current_page == self.page_ask):
+        if (crypto and use_device and self.current_page == self.page_ask): #A: True
+            #A: Not actually shown until returning to
+            #A: ubiquity.frontend.gtk_ui.py
+            #A: def on_next_clicked(...):
+            #A:     ...
+            #A      self.allow_change_step(True)
             self.show_crypto_page()
-            self.plugin_is_install = one_disk
+            self.plugin_is_install = one_disk #A: True
             return True
 
         if (self.current_page == self.page_crypto and
@@ -2535,20 +2547,27 @@ class Page(plugin.Plugin):
         return options
 
     def run(self, priority, question):
+        #A: False
         if self.done:
             # user answered confirmation question or backed up
             return self.succeeded
 
+        #A: 'partman-auto/init_automatically_partition'
         self.current_question = question
+        #A: [('70some_device_crypto________crypto', 'Guided - use entire disk and set up encrypted LVM') ...]
         options = self.snoop()
+        #A: [('70some_device_crypto', 'crypto', 'Guided - use entire disk and set up encrypted LVM') ...]
         menu_options = self.snoop_menu(options)
         self.debug('Partman: state = %s', self.__state)
         self.debug('Partman: auto_state = %s', self.auto_state)
 
+        #A: True
         if question.endswith('automatically_partition'):
             self.autopartition_question = question
+            #A: 4 total: ['Guided - use entire disk and set up encrypted LVM' ...]
             choices = self.choices(question)
 
+            #A: True
             if self.auto_state is None:
                 self.some_device_desc = \
                     self.description('partman-auto/text/use_device')
@@ -2561,10 +2580,13 @@ class Page(plugin.Plugin):
                 self.some_device_crypto_desc = \
                     self.description('partman-auto-crypto/text/choice')
                 self.extra_options = {}
+
+                #A: True
                 if choices:
                     self.auto_state = [0, None]
             else:
                 self.auto_state[0] += 1
+
             while self.auto_state[0] < len(choices):
                 self.auto_state[1] = choices[self.auto_state[0]]
                 if (self.auto_state[1] == self.some_device_desc or
@@ -2572,6 +2594,9 @@ class Page(plugin.Plugin):
                     break
                 else:
                     self.auto_state[0] += 1
+
+            #A: True
+            #A: self.auto_state = [0, 'Guided - use entire disk']
             if self.auto_state[0] < len(choices):
                 self.preseed_as_c(question, self.auto_state[1], seen=False)
                 self.succeeded = True

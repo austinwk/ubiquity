@@ -1603,12 +1603,20 @@ class Wizard(BaseFrontend):
 
     def on_next_clicked(self, unused_widget):
         """Callback to control the installation process between steps."""
+        #A: ubi-language stepLanguage.ui
+        #A: ubi-console-setup.py stepKeyboardConf.ui
+        #A: ubi-prepare stepPrepare.ui
+        #A: ubi-partman stepPartAsk.ui
+        #A: ubi-partman stepPartCrypto.ui
         if not self.allowed_change_step or not self.allowed_go_forward:
             return
 
         self.allow_change_step(False)
         ui = self.pages[self.pagesindex].ui
+        #A: ubi-partman, ubi-prepare, ubi-usersetup, ubi-wireless
+        #A: TODO: What is this attr for? Indicates whether the user can advance to a subsequent step?
         if hasattr(ui, 'plugin_on_next_clicked'):
+            #A: ubi-partman returns True on the first call and False on the second
             if ui.plugin_on_next_clicked():
                 # Stop processing and return to the page.
                 self.allow_change_step(True)
