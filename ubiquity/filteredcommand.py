@@ -38,7 +38,7 @@ DEBCONF_IO_OUT = 2
 DEBCONF_IO_ERR = 4
 DEBCONF_IO_HUP = 8
 
-
+#A: Why explicitly inherit from object? Is it trying to be compatible with Python2?
 class UntrustedBase(object):
     def get(self, attr):
         '''Safely gets an attribute.  If it doesn't exist, returns None'''

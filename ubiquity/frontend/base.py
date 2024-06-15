@@ -42,7 +42,7 @@ WGET_HASH = '4589f42e1546aa47ca181e5d949d310b'
 class Controller:
     def __init__(self, wizard):
         self._wizard = wizard #A: ubiquity.frontend.gtk_ui.Wizard
-        self.dbfilter = None
+        self.dbfilter = None #A: 
         self.oem_config = wizard.oem_config
         self.oem_user_config = wizard.oem_user_config
 

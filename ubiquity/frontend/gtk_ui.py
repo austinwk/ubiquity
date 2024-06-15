@@ -326,24 +326,39 @@ class Wizard(BaseFrontend):
         self.builder.add_from_file('%s/ubiquity.ui' % UIDIR) #A: /usr/share/ubiquity/gtk/ubiquity.ui
 
         self.builders = [self.builder]
+        #A: Component[]
+        #A: [ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup]
         self.pages = []
         self.pagesindex = 0
         self.pageslen = 0
         steps = self.builder.get_object("steps")
         found_install = False
-        for mod in self.modules: #A: Component[]
+
+        #A: self.modules: BaseFrontend.modules: Component[]
+        #A: [ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup, ubi-network]
+        for mod in self.modules:
             if hasattr(mod.module, 'PageGtk'): #A: all except ubi-network
                 mod.ui_class = mod.module.PageGtk
                 mod.controller = Controller(self)
-                mod.ui = mod.ui_class(mod.controller) #A: Instantiate the module/plugin UI (PageGtk)
+                mod.ui = mod.ui_class(mod.controller)
                 mod.title = mod.ui.get('plugin_title')
-                widgets = mod.ui.get('plugin_widgets')
+
+                #A: Each plugin does something like this:
+                #A:   builder = Gtk.Builder()
+                #A:   builder.add_from_file(os.path.join(..., 'stepKeyboardConf.ui'))
+                #A:   self.page = builder.get_object('stepKeyboardConf')
+                #A:   self.plugin_widgets = self.page
+                #A: So `widgets` represents a GtkObject (currently either a GtkAlignment or GtkBox)
+                widgets = mod.ui.get('plugin_widgets') #A: GtkWidget extracted from step<>.ui
+
+                #A: Extra windows, like the one to choose LVM/zfs/encryption on the partitioning step
+                #A: [ubi-partman, ubi-prepare]
                 optional_widgets = mod.ui.get('plugin_optional_widgets')
-                if not found_install:
+
+                if not found_install: #A: True
                     found_install = mod.ui.get('plugin_is_install') #A: ubi-partman
-                #A: all except ubi-network
-                #A: widgets: no plugins have multiple widgets
-                #A: optional_widgets: Only ubi-partman and ubi-prepare have optional_widgets
+
+                #A: [ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup]
                 if widgets or optional_widgets:
                     def fill_out(widget_list):
                         rv = []
@@ -832,10 +847,14 @@ class Wizard(BaseFrontend):
         self.a11y_profile_set(self.sr_profile_name)
         os.environ['UBIQUITY_A11Y_PROFILE'] = 'screen-reader'
 
+    #A: ------------------------------------------------------------------------
+    #A:
+    #A:
+    #A: -----------------------------------------------------------------------
     def run(self):
         """run the interface."""
 
-        if os.getuid() != 0:
+        if os.getuid() != 0: #A: root has uid 0
             title = ('This installer must be run with administrative '
                      'privileges, and cannot continue without them.')
             dialog = Gtk.MessageDialog(
@@ -854,10 +873,10 @@ class Wizard(BaseFrontend):
             if 'UBIQUITY_DEBUG' not in os.environ:
                 self.disable_terminal()
 
-        # show interface
         self.allow_change_step(True)
 
         # Auto-connecting signals with additional parameters does not work.
+        #A: grub_new_device_entry is a GtkComboBox on ubiquity.ui
         self.grub_new_device_entry.connect(
             'changed', self.grub_verify_loop, self.grub_fail_okbutton)
 
@@ -873,11 +892,13 @@ class Wizard(BaseFrontend):
         self.set_current_page(0)
         self.live_installer.show() #A: live_installer: Gtk.Widget
 
+        #A: pages: Base.Component[]
+        #A: [ubi-language, ubi-console-setup, None, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup]
         while (self.pagesindex < len(self.pages)):
             if self.current_page is None:
                 return self.returncode
 
-            page = self.pages[self.pagesindex] #A: page: Base.Component
+            page = self.pages[self.pagesindex] #A: Base.Component
             skip = False
 
             if hasattr(page.ui, 'plugin_skip_page'): #A: Only ubi-wireless
@@ -888,8 +909,7 @@ class Wizard(BaseFrontend):
             if hasattr(page.ui, 'is_automatic'): #A: None
                 automatic = page.ui.is_automatic
 
-            #A: filter_class = <plugin>.Page (ex: ubi-language.Page)
-            #A: Except for ubi-wireless which is None
+            #A: filter_class: <plugin>.Page
             if not skip and not page.filter_class: #A: Only ubi-wireless
                 # This page is just a UI page
                 self.dbfilter = None
@@ -898,12 +918,12 @@ class Wizard(BaseFrontend):
                     self.run_main_loop()
             elif not skip:
                 old_dbfilter = self.dbfilter
-                if issubclass(page.filter_class, Plugin):
-                    ui = page.ui
+                if issubclass(page.filter_class, Plugin): #A: All are
+                    ui = page.ui #A: <plugin>.PageGtk
                 else:
                     ui = None
                 self.start_debconf()
-                self.dbfilter = page.filter_class(self, ui=ui) #A: <ubi-___>.Page(self, ui=<ubi-___>.PageGtk)
+                self.dbfilter = page.filter_class(self, ui=ui) #A: <plugin>.Page(self, ui=<plugin>.PageGtk)
 
                 if self.dbfilter is not None and self.dbfilter != old_dbfilter:
                     self.allow_change_step(False)
@@ -1603,25 +1623,32 @@ class Wizard(BaseFrontend):
 
     def on_next_clicked(self, unused_widget):
         """Callback to control the installation process between steps."""
-        #A: ubi-language stepLanguage.ui
+        #A: ubi-language.py      stepLanguage.ui
         #A: ubi-console-setup.py stepKeyboardConf.ui
-        #A: ubi-prepare stepPrepare.ui
-        #A: ubi-partman stepPartAsk.ui
-        #A: ubi-partman stepPartCrypto.ui
+        #A: ubi-prepare.py       stepPrepare.ui
+        #A: ubi-partman.py       stepPartAsk.ui
+        #A: ubi-partman.py       stepPartCrypto.ui
         if not self.allowed_change_step or not self.allowed_go_forward:
             return
 
         self.allow_change_step(False)
+
+        #A: ui is one of ubiquity.plugins.<plugin>.PageGtk
         ui = self.pages[self.pagesindex].ui
-        #A: ubi-partman, ubi-prepare, ubi-usersetup, ubi-wireless
-        #A: TODO: What is this attr for? Indicates whether the user can advance to a subsequent step?
+
+        #A: True: ubi-prepare.PageGtk, ubi-partman.PageGtk (after stepPartAsk, but not after stepPartCrypto)
+        #A: False: ubi-language.PageGtk, ubi-console-setup.PageGtk, ubi-partman.PageGtk (after stepPartCrypto)
         if hasattr(ui, 'plugin_on_next_clicked'):
-            #A: ubi-partman returns True on the first call and False on the second
             if ui.plugin_on_next_clicked():
                 # Stop processing and return to the page.
                 self.allow_change_step(True)
                 return
 
+        #A: self.dbfilter is one of ubiquity.plugins.<plugin>.Page
+        #A: True: ubi-language, ubi-console-setup, ubi-partman (after stepPartCrypto)
+        #A: False: none
+        #A: *ubi-prepare never makes it here because it has the attr `plugin_on_next_clicked`
+        #A: *ubi-partman makes it here after stepPartCrypto because stepPartAsk has the attr `plugin_on_next_clicked`
         if self.dbfilter is not None:
             self.dbfilter.ok_handler()
             # expect recursive main loops to be exited and

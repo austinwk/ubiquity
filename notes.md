@@ -41,6 +41,41 @@ class Debconf:
         self.setUp(title)
 ```
 
+## Complaints
+
+Python isn't typed and the variables aren't always named in a way that makes the value's class clear.
+
+Widgets from the glade xml are added as attributes/properties to the wizard via a loop using each widget's id. It would have been easier to read if they were added explicitly. This happens in ubiquity/frontend/gtk_ui.Wizard.__init__
+
+```py
+for builder in self.builders:
+    for widget in builder.get_objects(): #A: 101 objects (buttons, etc)
+        add_widget(self, widget) #A: Each object id is added as an attribute/property
+        if isinstance(widget, Gtk.Window):
+            self.toplevels.add(widget)
+```
+
+## Flow
+
+bin/ubiquity.main()
+
+  install() ->
+
+bin/ubiquity.install()
+
+  wizard.run() ->
+
+ubiquity/frontend/gtk_ui.Wizard.run()
+
+  Gtk.main()
+
+--- GUI events handle the install ---
+
+
+
+--- After GUI events ---
+
+
 ## Environment
 
 ```json
