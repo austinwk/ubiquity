@@ -331,7 +331,7 @@ class Wizard(BaseFrontend):
         self.pages = []
         self.pagesindex = 0
         self.pageslen = 0
-        steps = self.builder.get_object("steps")
+        steps = self.builder.get_object("steps") #A: Gtk.Notebook
         found_install = False
 
         #A: self.modules: BaseFrontend.modules: Component[]
@@ -349,10 +349,10 @@ class Wizard(BaseFrontend):
                 #A:   self.page = builder.get_object('stepKeyboardConf')
                 #A:   self.plugin_widgets = self.page
                 #A: So `widgets` represents a GtkObject (currently either a GtkAlignment or GtkBox)
-                widgets = mod.ui.get('plugin_widgets') #A: GtkWidget extracted from step<>.ui
+                widgets = mod.ui.get('plugin_widgets') #A: GtkWidget extracted from step___.ui
 
                 #A: Extra windows, like the one to choose LVM/zfs/encryption on the partitioning step
-                #A: [ubi-partman, ubi-prepare]
+                #A: ubi-partman and ubi-prepare have them
                 optional_widgets = mod.ui.get('plugin_optional_widgets')
 
                 if not found_install: #A: True
@@ -365,14 +365,15 @@ class Wizard(BaseFrontend):
                         if not isinstance(widget_list, list):
                             widget_list = [widget_list]
                         for w in widget_list:
-                            if not w:
+                            if not w: #A: None
                                 continue
-                            if isinstance(w, str):
+                            if isinstance(w, str): #A: None
                                 w = add_subpage(self, steps, w)
                             else:
-                                steps.append_page(w, None) #A: Append the page to the Gtk.Notebook
+                                steps.append_page(w, None) #A: All. Appends the page to the Gtk.Notebook.
                             rv.append(w)
                         return rv
+
                     #A: Grrr. Not explicitly defined properties of Component
                     mod.widgets = fill_out(widgets)
                     mod.optional_widgets = fill_out(optional_widgets)
@@ -386,14 +387,20 @@ class Wizard(BaseFrontend):
         if not found_install: #A: False (ubi-partman is install)
             self.pages[self.pageslen - 1].ui.plugin_is_install = True
 
+        #A: [w.get_propery('name') for w in self.toplevels]
+        #A: [live-installer, partition_encryption_options, partition_lvm_dialog, warning_dialog, bootloader_fail_dialog, ubi_question_dialog, crash_dialog, finished_dialog, partition_dialog, advanced_features_dialog]
+        #A: live-installer is a Gtk.Window, the rest are Gtk.Dialog
         self.toplevels = set()
         for builder in self.builders: #A: There's only one
             for widget in builder.get_objects(): #A: 101 objects. Every Label, Box, Image, etc
                 add_widget(self, widget) #A: Adds objects as properties so you can call things like `self.next` to reference the "next" button.
-                if isinstance(widget, Gtk.Window):
+
+                if isinstance(widget, Gtk.Window): #A: Gtk.Dialog is a Gtk.Window
                     self.toplevels.add(widget)
+
         self.builder.connect_signals(self) #A: Objects like buttons can have associated functions. For example the "next" button calls `on_next_clicked`
 
+        #A: Creates the little progress squares at the bottom of the installer GUI
         for mod in self.pages:
             progress = Gtk.ProgressBar()
             progress.get_accessible().set_role(Atk.Role.INVALID)
@@ -410,7 +417,7 @@ class Wizard(BaseFrontend):
             'progress_bar': 2,
         }
 
-        self.stop_debconf()
+        self.stop_debconf() #A: Why?
         self.translate_widgets(reget=True)
 
         self.customize_installer()
@@ -847,10 +854,6 @@ class Wizard(BaseFrontend):
         self.a11y_profile_set(self.sr_profile_name)
         os.environ['UBIQUITY_A11Y_PROFILE'] = 'screen-reader'
 
-    #A: ------------------------------------------------------------------------
-    #A:
-    #A:
-    #A: -----------------------------------------------------------------------
     def run(self):
         """run the interface."""
 
