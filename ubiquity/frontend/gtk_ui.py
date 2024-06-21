@@ -879,7 +879,7 @@ class Wizard(BaseFrontend):
         self.allow_change_step(True)
 
         # Auto-connecting signals with additional parameters does not work.
-        #A: grub_new_device_entry is a GtkComboBox on ubiquity.ui
+        #A: grub_new_device_entry is a GtkComboBox on ubiquity.ui. I think it only appears if there is a problem with the bootloader.
         self.grub_new_device_entry.connect(
             'changed', self.grub_verify_loop, self.grub_fail_okbutton)
 
@@ -896,7 +896,7 @@ class Wizard(BaseFrontend):
         self.live_installer.show() #A: live_installer: Gtk.Widget
 
         #A: pages: Base.Component[]
-        #A: [ubi-language, ubi-console-setup, None, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup]
+        #A: [ubi-language, ubi-console-setup, ubi-wireless, ubi-prepare, ubi-partman, ubi-timezone, ubi-usersetup]
         while (self.pagesindex < len(self.pages)):
             if self.current_page is None:
                 return self.returncode
@@ -904,7 +904,8 @@ class Wizard(BaseFrontend):
             page = self.pages[self.pagesindex] #A: Base.Component
             skip = False
 
-            if hasattr(page.ui, 'plugin_skip_page'): #A: Only ubi-wireless
+            #A: Only ubi-wireless
+            if hasattr(page.ui, 'plugin_skip_page'):
                 if page.ui.plugin_skip_page():
                     skip = True
 
@@ -913,7 +914,8 @@ class Wizard(BaseFrontend):
                 automatic = page.ui.is_automatic
 
             #A: filter_class: <plugin>.Page
-            if not skip and not page.filter_class: #A: Only ubi-wireless
+            #A: Only ubi-wireless
+            if not skip and not page.filter_class:
                 # This page is just a UI page
                 self.dbfilter = None
                 self.dbfilter_status = None
@@ -921,22 +923,32 @@ class Wizard(BaseFrontend):
                     self.run_main_loop()
             elif not skip:
                 old_dbfilter = self.dbfilter
-                if issubclass(page.filter_class, Plugin): #A: All are
+                if issubclass(page.filter_class, Plugin): #A: All except ubi-wireless
                     ui = page.ui #A: <plugin>.PageGtk
                 else:
                     ui = None
-                self.start_debconf()
-                self.dbfilter = page.filter_class(self, ui=ui) #A: <plugin>.Page(self, ui=<plugin>.PageGtk)
 
+                self.start_debconf()
+
+                 #A: <plugin>.Page(self, ui=<plugin>.PageGtk) -> plugin.Plugin -> FilteredCommand.__init__(...)
+                self.dbfilter = page.filter_class(self, ui=ui)
+
+                #A: All except ubi-wireless
                 if self.dbfilter is not None and self.dbfilter != old_dbfilter:
                     self.allow_change_step(False)
-                    #A: Opens the main window, but no page is displayed yet (so the window is empty).
+                    #A: TODO: Why use idle_add?
                     #A: Adds a function to be called whenever there are no higher priority events pending to the default main loop.
-                    GLib.idle_add(
+                    GLib.idle_add( #A: On the first run, the desktop toolbar icon displays here
                         lambda: self.dbfilter.start(auto_process=True)) #A: Page -> Plugin -> FilteredCommand.start(...)
 
                 page.controller.dbfilter = self.dbfilter
-                Gtk.main() #A: Shows the first page. Control is passed to Gtk until an event from the page occurs.
+
+                #A: Shows the first page. Control is passed to Gtk until an event from the page occurs.
+                Gtk.main()
+                #A: FilteredCommand.start(...) runs
+
+                #A: ... Wait for a GUI event ...
+
                 self.pending_quits = max(0, self.pending_quits - 1)
                 page.controller.dbfilter = None
 

@@ -663,18 +663,21 @@ class Page(plugin.Plugin):
 
         localechooser_script = '/usr/lib/ubiquity/localechooser/localechooser' #A: d-i/source/localechooser/localechooser
         if ('UBIQUITY_FRONTEND' in os.environ and
-                os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui'): #A: True
+                os.environ['UBIQUITY_FRONTEND'] == 'debconf_ui'): #A: False
             localechooser_script += '-debconf'
 
         questions = ['localechooser/languagelist']
         environ = {
             'PATH': '/usr/lib/ubiquity/localechooser:' + os.environ['PATH'],
         }
+
         if ('UBIQUITY_FRONTEND' in os.environ and
                 os.environ['UBIQUITY_FRONTEND'] == "debconf_ui"): #A: False
             environ['TERM_FRAMEBUFFER'] = '1'
         else:
             environ['OVERRIDE_SHOW_ALL_LANGUAGES'] = '1'
+
+        #A: '/usr/lib/ubiquity/localechooser/localechooser', ['localechooser/languagelist'], {'PATH': '/usr/lib/ubiquity/localechooser:...', 'OVERRIDE_SHOW_ALL_LANGUAGES': '1'}
         return localechooser_script, questions, environ
 
     def run(self, priority, question):

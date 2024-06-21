@@ -56,6 +56,8 @@ static void usage(FILE *output)
 	fprintf(output, "Usage: log-output -t TAG [--pass-stdout] PROGRAM [ARGUMENTS]\n");
 }
 
+// argv example from ubi-language.Page -> plugin.Plugin -> FilteredCommand.start(...) -> DebconfFilter.start(...)
+// "log-output -t ubiquity --pass-stdout /usr/lib/ubiquity/localechooser/localechooser"
 int main(int argc, char **argv)
 {
 	char *tag = NULL;

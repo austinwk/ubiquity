@@ -1865,6 +1865,7 @@ class Page(plugin.Plugin):
         self.some_device_desc = ''
         self.resize_desc = ''
         self.manual_desc = ''
+
         with misc.raised_privileges():
             # If an old parted_server is still running, clean it up.
             if os.path.exists('/var/run/parted_server.pid'):
@@ -1880,6 +1881,8 @@ class Page(plugin.Plugin):
 
             # Force autopartitioning to be re-run.
             shutil.rmtree('/var/lib/partman', ignore_errors=True)
+
+        #A: See the README Question section. This has to do with partman auto recipes.
         self.thaw_choices('choose_partition')
         self.thaw_choices('active_partition')
 

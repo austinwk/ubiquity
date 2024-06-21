@@ -81,8 +81,8 @@ class UntrustedBase(object):
 
 class FilteredCommand(UntrustedBase):
     def __init__(self, frontend, db=None, ui=None):
-        self.frontend = frontend  # ubiquity-wide UI
-        self.ui = ui  # page-specific UI
+        self.frontend = frontend  #A: gtk_ui.Wizard
+        self.ui = ui  #A: <plugin>.PageGtk
         # db does not normally need to be specified.
         self.db = db
         self.done = False
@@ -93,21 +93,35 @@ class FilteredCommand(UntrustedBase):
 
     def start(self, auto_process=False):
         self.status = None
+
+        #A: Probably always True
         if not self.db:
             assert self.frontend is not None
-            self.frontend.start_debconf()
+            self.frontend.start_debconf() #A: gtk_ui.Wizard -> BaseFrontend.start_debconf()
             self.db = self.frontend.db
+
         self.ui_loop_level = 0
-        prep = self.prepare()
+
+        #A:          d-i script path                                  questions                       path
+        #A: Format: ['/usr/lib/ubiquity/localechooser/localechooser', ['localechooser/languagelist'], {'PATH': '/usr/lib/ubiquity/localechooser:...'}]
+        prep = self.prepare() #A: <plugin>.Page.prepare() (override of Plugin.prepare())
+
         if prep is None:
             self.run(None, None)
             return
+
+        #A: log-output
+        #A: - Source code:      d-i/source/debian-installer-utils/log-output.c
+        #A: - Live environment: /usr/bin/log-output
         self.command = ['log-output', '-t', PACKAGE, '--pass-stdout']
+
         if isinstance(prep[0], str):
             self.command.append(prep[0])
         else:
             self.command.extend(prep[0])
+
         question_patterns = prep[1]
+
         if len(prep) > 2:
             env = prep[2]
         else:
@@ -120,12 +134,13 @@ class FilteredCommand(UntrustedBase):
 
         widgets = {}
         for pattern in question_patterns:
-            widgets[pattern] = self
+            widgets[pattern] = self #A: self = <plugin>.Page
+
         self.dbfilter = DebconfFilter(self.db, widgets, self.is_automatic)
 
         # TODO: Set as unseen all questions that we're going to ask.
 
-        if auto_process:
+        if auto_process: #A: True
             self.dbfilter.start(self.command, blocking=False, extra_env=env)
             # Clearly, this isn't enough for full non-blocking operation.
             # However, debconf itself is generally quick, and the confmodule
@@ -136,6 +151,7 @@ class FilteredCommand(UntrustedBase):
             self.frontend.watch_debconf_fd(
                 self.dbfilter.subout_fd, self.process_input)
         else:
+            #A: <plugin>.Page.start(...)
             self.dbfilter.start(self.command, blocking=True, extra_env=env)
 
     def process_line(self):

@@ -87,13 +87,15 @@ valid_commands = {
 
 class DebconfFilter:
     def __init__(self, db, widgets={}, automatic=False):
-        self.db = db
-        self.widgets = widgets
+        self.db = db #A: <plugin>.Page
+        self.widgets = widgets #A: {'question', <plugin>.Page}
         self.automatic = automatic
+
         if 'DEBCONF_DEBUG' in os.environ:
             self.debug_re = re.compile(os.environ['DEBCONF_DEBUG'])
         else:
             self.debug_re = None
+
         self.escaping = False
         self.progress_cancel = False
         self.progress_bars = []
@@ -190,6 +192,9 @@ class DebconfFilter:
         return list(found)
 
     def start(self, command, blocking=True, extra_env={}):
+        #A: `command` example from ubi-language.Page (via FilteredCommand):
+        #A: ['log-output', '-t', 'ubiquity', '--pass-stdout', '/usr/lib/ubiquity/localechooser/localechooser']
+
         def subprocess_setup():
             os.environ['DEBIAN_HAS_FRONTEND'] = '1'
             if 'DEBCONF_USE_CDEBCONF' in os.environ:
@@ -212,13 +217,16 @@ class DebconfFilter:
         self.subp = subprocess.Popen(
             command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             preexec_fn=subprocess_setup, universal_newlines=True)
+
         self.subin = self.subp.stdin
         self.subout = self.subp.stdout
         self.subout_fd = self.subout.fileno()
         self.blocking = blocking
+
         if not self.blocking:
             flags = fcntl.fcntl(self.subout_fd, fcntl.F_GETFL)
             fcntl.fcntl(self.subout_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
         self.next_go_backup = False
         self.waiting = False
 

@@ -57,24 +57,129 @@ for builder in self.builders:
 
 ## Flow
 
+```txt
 bin/ubiquity.main()
+|
+|  install() -> bin/ubiquity.install()
+|  |
+|  |  wizard.run() -> ubiquity/frontend/gtk_ui.Wizard.run()
+|  |  |
+|  |  +  for each component (referred to as a page... really, each plugin)
+|  |  |  page.filter_class(self, ui=ui) -> ubiquity/filteredcommand.FilteredCommand.__init__()
+|  |  |
+|  |  |  GLib.idle_add(lambda: self.dbfilter.start(auto_process=True)) -> ubiquity/filteredcommand.FilteredCommand.start()
+|  |  |  |
+|  |  |  |  self.prepare() -> ubiquity/plugins/<plugin>.Page.prepare()
+|  |  |  |  |
+|  |  |  |  |  TODO
+|  |  |  |
+|  |  |  |  self.dbfilter = DebconfFilter(self.db, widgets, self.is_automatic) -> ubiquity/debconffilter.DebconfFilter()
+|  |  |  |  self.dbfilter.start(self.command, blocking=False, extra_env=env) -> ubiquity/debconffilter.DebconfFilter.start()
+|  |  |  |  |
+|  |  |  |  |  TODO
+|  |  |  |
+|  |  |  |  self.frontend.watch_debconf_fd(self.dbfilter.subout_fd ,self.process_input)
+|  |  |  |  |
+|  |  |  |  |TODO
+|  |  |
+|  |  |  Gtk.main()
+|  |  |
+-------- Wait for GUI event --------
+|  |  |
+|  |  E  [gui/gtk/ubiquity.ui] on_next_clicked -> ubiquity/frontend/gtk_ui.Wizard.on_next_clicked()
+|  |  |  |
+|  |  |  |
 
-  install() ->
 
-bin/ubiquity.install()
+```
 
-  wizard.run() ->
+```txt
+/usr/lib/ubiquity/bin/ubiquity<module>()
+main(oem_config)
 
-ubiquity/frontend/gtk_ui.Wizard.run()
+/usr/lib/ubiquity/bin/ubiquity main()
+install(args[0], query=options.query)
 
-  Gtk.main()
+/usr/lib/ubiquity/bin/ubiquity install()
+ret = wizard.run()
 
---- GUI events handle the install ---
+/usr/lib/ubiquity/ubiquity/frontend/gtk_ui.py run()
+Gtk.main()
 
+/usr/lib/python3/dist-packages/gi/overrides/Gtk.py main()
+return _Gtk_main(*args, **kwargs)
 
+/usr/lib/python3/dist-packages/gi/overrides/GLib.py <lambda>()
+func fdtransform = lambda, cond, *data: callback(channel, cond *data)
 
---- After GUI events ---
+/usr/lib/ubiquity/ubiquity/frontend/gtk_ui.py watch_debconf_fd_helper()
+return callback(source, debconf_condition)
 
+/usr/lib/ubiquity/ubiquity/filteredcommand.py process_input()
+if not self.process_line():
+
+/usr/lib/ubiquity/ubiquity/filteredcommand.py process_line()
+return self.dbfilter.process_line()
+
+/usr/lib/ubiquity/ubiquity/debconffilter.py process_line()
+if not input_widgets[0].run(priority, question):
+
+/usr/lib/ubiquity/plugins/ubi-language.py run()
+return plugin.Plugin.run(self, priority, question)
+
+/usr/lib/ubiquity/ubiquity/filteredcommand.py run()
+self.enter_ui_loop()
+
+/usr/lib/ubiquity/ubiquity/filteredcommand.py enter_ui_loop()
+self.frontend.run_main_loop()
+
+/usr/lib/ubiquity/frontend/gtk_ui.py run_main_loop()
+Gtk.main()
+
+/usr/lib/python3/dist-packes/gi/overrides/Gtk.py main()
+return _Gtk_main(*args, **kwargs)
+
+/usr/lib/ubiquity/ubiquity/frontend/gtk_ui.py on_next_clicked()
+breakpoint()
+```
+
+## Idle -> FilteredCommand.start
+
+wizard.run: page = ubi-language
+
+GUI displays, page is blank
+
+wizard.run: Gtk.main()
+
+IDLE -> FilteredCommand.start
+
+ubi-language page displays
+
+Click Continue button
+
+wizard.run: page = ubi-console-setup
+
+IDLE -> FilteredCommand.start
+
+ubi-console-setup page displays
+
+Click Continue button
+
+wizard.run: page = ubi-prepare
+
+IDLE -> FilteredCommand.start
+
+ubi-prepare page displays
+
+Click Continue button
+
+wizard.run: page = ubi-partman
+
+IDLE -> FilteredCommand.start
+
+ubi-partman page displays
+
+...repeat
 
 ## Environment
 
@@ -124,6 +229,8 @@ ubiquity/frontend/gtk_ui.Wizard.run()
 ## Questions
 
 When is [debian/ubiquity.templates](debian/ubiquity.templates) applied? During the build process?
+
+Look into d-i partman, debian installer partman, partman auto, partman recipes. Info seems limited. [Here is a sample](https://salsa.debian.org/installer-team/debian-installer/-/blob/master/doc/devel/partman-auto-recipe.txt). This is used in ubi-partman, which seems to interact using strings like 'choose_partition' and 'active_partition'. It all seems esoteric.
 
 ## debconf
 
