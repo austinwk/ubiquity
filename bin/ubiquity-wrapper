@@ -28,7 +28,7 @@ def main():
         newargv.append(sys.argv[i])
         i += 1
 
-    if os.getuid() == 0: #A: True
+    if os.getuid() == 0: #A: True. uid 0 is root
         # no privilege escalation required
         inner = ['/usr/lib/ubiquity/bin/ubiquity'] + newargv #A: newargv = ['gtk_ui']
 

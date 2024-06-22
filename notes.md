@@ -2,21 +2,13 @@
 
 [PyGObject API](https://lazka.github.io/pgi-docs/)
 
-Execution
+## Random
 
-1. Double clicking the desktop icon runs: `sudo --preserve-env=DBUS_SESSION_BUS_ADDRESS,XDG_DATA_DIRS,XDG_RUNTIME_DIR sh -c 'WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui'` (-c tells `sh` to read commands from a string)
-2. Which executes: `/usr/bin/ubiquity` (src: [bin/ubiquity-wrapper](bin/ubiquity-wrapper))
-3. Which calls `/usr/lib/ubiquity/bin/ubiquity` (src: [bin/ubiquity](bin/ubiquity))
+File descriptors
 
-`sudo --preserve-env=list` Sudo excludes many environment variables. This keeps the listed ones.
-
-* `DBUS_SESSION_BUS_ADDRESS`: unix:path=/run/user/999/bus
-* `XDG_DATA_DIRS`: /usr/share/cinnamon:/usr/share/gnome:/home/mint/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
-* `XDG_RUNTIME_DIR`: /run/user/999
-
-`debconf` package is `/lib/python3/dist-packages/debconf.py`
-
-`Debconf.get(...)` and `Debconf.set(...)` (and others) are added by `Debconf.setCommand(...)`
+* 0: stdin
+* 1: stdout
+* 2: stderr
 
 ## Debugging
 
@@ -57,38 +49,55 @@ for builder in self.builders:
 
 ## Flow
 
+Execution
+
+1. Double clicking the desktop icon runs: `sudo --preserve-env=DBUS_SESSION_BUS_ADDRESS,XDG_DATA_DIRS,XDG_RUNTIME_DIR sh -c 'WEBKIT_DISABLE_COMPOSITING_MODE=1 ubiquity gtk_ui'` (-c tells `sh` to read commands from a string)
+2. Which executes: `/usr/bin/ubiquity` (src: [bin/ubiquity-wrapper](bin/ubiquity-wrapper))
+3. Which calls `/usr/lib/ubiquity/bin/ubiquity` (src: [bin/ubiquity](bin/ubiquity))
+
+`sudo --preserve-env=list` Sudo excludes many environment variables. This keeps the listed ones.
+
+* `DBUS_SESSION_BUS_ADDRESS`: unix:path=/run/user/999/bus
+* `XDG_DATA_DIRS`: /usr/share/cinnamon:/usr/share/gnome:/home/mint/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+* `XDG_RUNTIME_DIR`: /run/user/999
+
+`debconf` package is `/lib/python3/dist-packages/debconf.py`
+
+`Debconf.get(...)` and `Debconf.set(...)` (and others) are added by `Debconf.setCommand(...)`
+
 ```txt
 bin/ubiquity.main()
-|
-|  install() -> bin/ubiquity.install()
-|  |
-|  |  wizard.run() -> ubiquity/frontend/gtk_ui.Wizard.run()
-|  |  |
-|  |  +  for each component (referred to as a page... really, each plugin)
-|  |  |  page.filter_class(self, ui=ui) -> ubiquity/filteredcommand.FilteredCommand.__init__()
-|  |  |
-|  |  |  GLib.idle_add(lambda: self.dbfilter.start(auto_process=True)) -> ubiquity/filteredcommand.FilteredCommand.start()
-|  |  |  |
-|  |  |  |  self.prepare() -> ubiquity/plugins/<plugin>.Page.prepare()
-|  |  |  |  |
-|  |  |  |  |  TODO
-|  |  |  |
-|  |  |  |  self.dbfilter = DebconfFilter(self.db, widgets, self.is_automatic) -> ubiquity/debconffilter.DebconfFilter()
-|  |  |  |  self.dbfilter.start(self.command, blocking=False, extra_env=env) -> ubiquity/debconffilter.DebconfFilter.start()
-|  |  |  |  |
-|  |  |  |  |  TODO
-|  |  |  |
-|  |  |  |  self.frontend.watch_debconf_fd(self.dbfilter.subout_fd ,self.process_input)
-|  |  |  |  |
-|  |  |  |  |TODO
-|  |  |
-|  |  |  Gtk.main()
-|  |  |
+.
+.  install() -> bin/ubiquity.install()
+.  .
+.  .  wizard.run() -> ubiquity/frontend/gtk_ui.Wizard.run()
+.  .  .
+.  .  +  for each component (referred to as a page... really, each plugin)
+.  .  .  .
+.  .  .  .  page.filter_class(self, ui=ui) -> ubiquity/filteredcommand.FilteredCommand.__init__()
+.  .  .  .
+.  .  .  .  GLib.idle_add(lambda: self.dbfilter.start(auto_process=True)) -> ubiquity/filteredcommand.FilteredCommand.start()
+.  .  .  .  .
+.  .  .  .  .  self.prepare() -> ubiquity/plugins/<plugin>.Page.prepare()
+.  .  .  .  .  .
+.  .  .  .  .  .  TODO
+.  .  .  .  .
+.  .  .  .  .  self.dbfilter = DebconfFilter(self.db, widgets, self.is_automatic) -> ubiquity/debconffilter.DebconfFilter()
+.  .  .  .  .  self.dbfilter.start(self.command, blocking=False, extra_env=env) -> ubiquity/debconffilter.DebconfFilter.start()
+.  .  .  .  .  .
+.  .  .  .  .  .  TODO
+.  .  .  .  .
+.  .  .  .  .  self.frontend.watch_debconf_fd(self.dbfilter.subout_fd ,self.process_input)
+.  .  .  .  .  .
+.  .  .  .  .  .  TODO
+.  .  .
+.  .  .  Gtk.main()
+.  .  .
 -------- Wait for GUI event --------
-|  |  |
-|  |  E  [gui/gtk/ubiquity.ui] on_next_clicked -> ubiquity/frontend/gtk_ui.Wizard.on_next_clicked()
-|  |  |  |
-|  |  |  |
+.  .  .
+.  .  E  [gui/gtk/ubiquity.ui] on_next_clicked -> ubiquity/frontend/gtk_ui.Wizard.on_next_clicked()
+.  .  .  .
+.  .  .  .
 
 
 ```
